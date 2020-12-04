@@ -263,8 +263,8 @@ class scoreboard;
     this.mon2scb = mon2scb;
     this.mon2scbhandshake = mon2scbhandshake;
     this.scb2monhandshake = scb2monhandshake;
-    foreach(mem_0[i]) mem_0[i] = 0;
-    foreach(mem_1[i]) mem_1[i] = 0;
+    //foreach(mem_0[i]) mem_0[i] = 0;
+    //foreach(mem_1[i]) mem_1[i] = 0;
   endfunction
   
   //stores the parts of the instructions
@@ -290,26 +290,69 @@ class scoreboard;
       if (trans.opcode == 3'b001) begin
         mem_0[new_addr] = trans.data;
         $display("[SCB-PASS] WDT Write:: Addr = %0h,\t Data = %0h", trans.addr, trans.data);
+        
+        // check read for wdt
+        if (trans.opcode_2 == 3'b010) begin
+            if (mem_0[new_addr] != trans.prdata_0)
+                $error("[CHK-FAIL] Addr = %0h,\t Data :: Expected = %0h Actual = %0h",trans.addr,mem_0[new_addr],trans.prdata_0);
+            else 
+                $display("[CHK-PASS] Addr = %0h,\t Data :: Expected = %0h Actual = %0h",trans.addr,mem_0[new_addr],trans.prdata_0);
+        end
       end
+      
+ 
+      
       // simulate write for memory
       if (trans.opcode == 3'b100) begin
         mem_1[trans.addr] = trans.data;
         $display("[SCB-PASS] MemPer Write:: Addr = %0h,\t Data = %0h", trans.addr, trans.data);
+        
+        if (trans.opcode_2 == 3'b101) begin
+            if (mem_1[trans.addr] != trans.prdata_1)
+                $error("[CHK-FAIL] Addr = %0h,\t Data :: Expected = %0h Actual = %0h",trans.addr,mem_1[trans.addr],trans.prdata_1);
+            else 
+                $display("[CHK-PASS] Addr = %0h,\t Data :: Expected = %0h Actual = %0h",trans.addr,mem_1[trans.addr],trans.prdata_1);
+        end
       end
       
       // check read for wdt
-      if (trans.opcode_2 == 3'b010) begin
+      if (trans.opcode == 3'b010) begin
         if (mem_0[new_addr] != trans.prdata_0)
-          $error("[CHK-FAIL] Addr = %0h,\t Data :: Expected = %0h Actual = %0h",trans.addr,mem_0[new_addr],trans.prdata_0);
+          $error("[CHK-FAIL - INSTR 1] Addr = %0h,\t Data :: Expected = %0h Actual = %0h",trans.addr,mem_0[new_addr],trans.prdata_0);
         else 
-          $display("[CHK-PASS] Addr = %0h,\t Data :: Expected = %0h Actual = %0h",trans.addr,mem_0[new_addr],trans.prdata_0);
+          $display("[CHK-PASS - INSTR 1] Addr = %0h,\t Data :: Expected = %0h Actual = %0h",trans.addr,mem_0[new_addr],trans.prdata_0);
       end
-      // check read for memory
-      if (trans.opcode_2 == 3'b101) begin
-        if (mem_1[trans.addr] != trans.prdata_1)
-          $error("[SCB-FAIL] Addr = %0h,\t Data :: Expected = %0h Actual = %0h",trans.addr,mem_1[trans.addr],trans.prdata_1);
+      
+      if (trans.opcode_2 == 3'b010 && trans.opcode != 3'b001) begin
+        if (mem_0[new_addr] != trans.prdata_0)
+          $error("[CHK-FAIL - INSTR 2] Addr = %0h,\t Data :: Expected = %0h Actual = %0h",trans.addr_2,mem_0[new_addr],trans.prdata_0);
         else 
-          $display("[SCB-PASS] Addr = %0h,\t Data :: Expected = %0h Actual = %0h",trans.addr,mem_1[trans.addr],trans.prdata_1);
+          $display("[CHK-PASS - INSTR 2] Addr = %0h,\t Data :: Expected = %0h Actual = %0h",trans.addr_2,mem_0[new_addr],trans.prdata_0);
+      end
+      
+      // check read for memory
+      if (trans.opcode == 3'b101) begin
+        if (mem_1[trans.addr] != trans.prdata_1)
+          $error("[CHK-FAIL - INSTR 1] Addr = %0h,\t Data :: Expected = %0h Actual = %0h",trans.addr,mem_1[trans.addr],trans.prdata_1);
+        else 
+          $display("[CHK-PASS - INSTR 1] Addr = %0h,\t Data :: Expected = %0h Actual = %0h",trans.addr,mem_1[trans.addr],trans.prdata_1);
+      end
+      
+       if (trans.opcode_2 == 3'b101 && trans.opcode != 3'b100) begin
+        if (mem_1[trans.addr] != trans.prdata_1)
+          $error("[CHK-FAIL - INSTR 2] Addr = %0h,\t Data :: Expected = %0h Actual = %0h",trans.addr_2,mem_1[trans.addr],trans.prdata_1);
+        else 
+          $display("[CHK-PASS - INSTR 2] Addr = %0h,\t Data :: Expected = %0h Actual = %0h",trans.addr_2,mem_1[trans.addr],trans.prdata_1);
+       end
+      
+      if(trans.opcode_2 == 3'b001) begin
+        mem_0[new_addr] = trans.data_2;
+        $display("[SCB-PASS - INSTR 2] WDT Write:: Addr = %0h,\t Data = %0h", trans.addr_2, trans.data_2);
+      end
+      
+      if (trans.opcode_2 == 3'b100) begin
+        mem_1[trans.addr] = trans.data_2;
+        $display("[SCB-PASS - INSTR 2] MemPer Write:: Addr = %0h,\t Data = %0h", trans.addr, trans.data);
       end
       
       if(trans.opcode == 3'b011) begin
